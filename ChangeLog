@@ -1,0 +1,8 @@
+2020-12-04 version 0.0.2:
+
+* Added X-Forwarded-For, X-Forwarded-Proto, and X-Forwarded-Port headers
+
+2020-11-17 version 0.0.1:
+
+* The first release
+
