@@ -61,9 +61,9 @@ func MakeLambdaClient(endpoint string) *lambda.Lambda {
 func MakeInvokeLambdaHandler(client *lambda.Lambda, functionName string, pb PayloadBuilder) func(http.ResponseWriter, *http.Request) {
     return func(w http.ResponseWriter, r *http.Request) {
         // Add proxy headers
-        r.Header.Add("x-forwarded-for", r.RemoteAddr[0:strings.LastIndex(r.RemoteAddr, ":")])
-        r.Header.Add("x-forwarded-proto", "http")
-        r.Header.Add("x-forwarded-port", "8080")
+        r.Header.Add("X-Forwarded-For", r.RemoteAddr[0:strings.LastIndex(r.RemoteAddr, ":")])
+        r.Header.Add("X-Forwarded-Proto", "http")
+        r.Header.Add("X-Forwarded-Port", "8080")
 
         // Parse HTTP response and create an event
         payload, err := pb.BuildRequest(r)
