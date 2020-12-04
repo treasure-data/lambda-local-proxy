@@ -1,11 +1,12 @@
 package main
 
 import (
+    "flag"
+    "fmt"
     "log"
     "net/http"
-    "flag"
     "os"
-    "fmt"
+    "strings"
     "github.com/aws/aws-sdk-go/aws"
     "github.com/aws/aws-sdk-go/aws/session"
     "github.com/aws/aws-sdk-go/service/lambda"
@@ -59,6 +60,11 @@ func MakeLambdaClient(endpoint string) *lambda.Lambda {
 
 func MakeInvokeLambdaHandler(client *lambda.Lambda, functionName string, pb PayloadBuilder) func(http.ResponseWriter, *http.Request) {
     return func(w http.ResponseWriter, r *http.Request) {
+        // Add proxy headers
+        r.Header.Add("x-forwarded-for", r.RemoteAddr[0:strings.LastIndex(r.RemoteAddr, ":")])
+        r.Header.Add("x-forwarded-proto", "http")
+        r.Header.Add("x-forwarded-port", "8080")
+
         // Parse HTTP response and create an event
         payload, err := pb.BuildRequest(r)
         if err != nil {

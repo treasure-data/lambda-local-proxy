@@ -57,6 +57,18 @@ $ go build
 
 See (GoReleaser)[https://goreleaser.com/] documents.
 
+Cheat sheet:
+
+```
+# Build packages in ./dist
+goreleaser --snapshot --skip-publish --rm-dist
+
+# Release
+git push         # make sure you pushed
+git push --tags  # code and tags.
+env GITHUB_TOKEN=... goreleaser
+```
+
 ## License
 
 Apache License, Version 2.0.
