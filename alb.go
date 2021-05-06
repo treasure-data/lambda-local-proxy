@@ -9,20 +9,17 @@ import (
     "net/http"
     "net/url"
     "strings"
+    "github.com/aws/aws-lambda-go/events"
 )
 
 func NewALBPayloadBuilder(enableMultiValue bool) PayloadBuilder {
-    if enableMultiValue {
-        return ALBMultiValuePayloadBuilder{}
-    } else {
-        return ALBPayloadBuilder{}
+    return ALBPayloadBuilder{
+        EnableMultiValue: enableMultiValue,
     }
 }
 
 type ALBPayloadBuilder struct {
-}
-
-type ALBMultiValuePayloadBuilder struct {
+    EnableMultiValue bool
 }
 
 func (pb ALBPayloadBuilder) BuildRequest(r *http.Request) ([]byte, error) {
@@ -36,65 +33,35 @@ func (pb ALBPayloadBuilder) BuildRequest(r *http.Request) ([]byte, error) {
         return nil, err
     }
 
-    event := struct {
-        HttpMethod string `json:"httpMethod"`
-        Path string `json:"path"`
-        QueryStringParameters map[string]string `json:"queryStringParameters"`
-        Headers map[string]string `json:"headers"`
-        Body string `json:"body"`
-        IsBase64Encoded bool `json:"isBase64Encoded"`
-    }{
-        HttpMethod: r.Method,
+    event := events.ALBTargetGroupRequest{
+        HTTPMethod: r.Method,
         Path: r.URL.Path,
-        QueryStringParameters: ArrayMapToFirstElementMap(queryParams),
-        Headers: ArrayMapToFirstElementMap(r.Header),
         Body: body,
         IsBase64Encoded: isBase64Encoded,
+        RequestContext: events.ALBTargetGroupRequestContext{
+            ELB: events.ELBContext{
+                TargetGroupArn: "arn:aws:elasticloadbalancing:us-east-2:123456789012:targetgroup/lambda-local-proxy-dummy/1234567890123456",
+            },
+        },
     }
 
-    return json.Marshal(event)
-}
-
-func (pb ALBMultiValuePayloadBuilder) BuildRequest(r *http.Request) ([]byte, error) {
-    queryParams, err := url.ParseQuery(r.URL.RawQuery)
-    if err != nil {
-        return nil, err
-    }
-
-    body, isBase64Encoded, err := ReadBodyAsString(r)
-    if err != nil {
-        return nil, err
-    }
-
-    event := struct {
-        HttpMethod string `json:"httpMethod"`
-        Path string `json:"path"`
-        MultiValueQueryStringParameters map[string][]string `json:"multiValueQueryStringParameters"`
-        MultiValueHeaders map[string][]string `json:"multiValueHeaders"`
-        Body string `json:"body"`
-        IsBase64Encoded bool `json:"isBase64Encoded"`
-    }{
-        HttpMethod: r.Method,
-        Path: r.URL.Path,
-        MultiValueQueryStringParameters: queryParams,
-        MultiValueHeaders: r.Header,
-        Body: body,
-        IsBase64Encoded: isBase64Encoded,
+    if pb.EnableMultiValue {
+        event.MultiValueQueryStringParameters = queryParams
+        event.MultiValueHeaders = r.Header
+    } else {
+        event.QueryStringParameters = ArrayMapToFirstElementMap(queryParams)
+        event.Headers = ArrayMapToFirstElementMap(r.Header)
     }
 
     return json.Marshal(event)
 }
 
 func (pb ALBPayloadBuilder) BuildResponse(blob []byte) (int, []byte, map[string][]string, error) {
-    resp := struct {
-        StatusCode int `json:"statusCode"`
-        Headers map[string]string `json:"headers"`
-        Body string `json:"body"`
-        IsBase64Encoded bool `json:"isBase64Encoded"`
-    }{}
+    resp := events.ALBTargetGroupResponse{}
 
     err := json.Unmarshal(blob, &resp)
 
+    var body []byte
     if err != nil {
         return BuildErrorResponse(err, "Invalid JSON response")
     } else if resp.IsBase64Encoded {
@@ -102,32 +69,15 @@ func (pb ALBPayloadBuilder) BuildResponse(blob []byte) (int, []byte, map[string]
         if err != nil {
             return BuildErrorResponse(err, "Invalid body in JSON response")
         }
-        return resp.StatusCode, binary, MapToArrayMap(resp.Headers), nil
+        body = binary
     } else {
-        return resp.StatusCode, []byte(resp.Body), MapToArrayMap(resp.Headers), nil
+        body = []byte(resp.Body)
     }
-}
 
-func (pb ALBMultiValuePayloadBuilder) BuildResponse(blob []byte) (int, []byte, map[string][]string, error) {
-    resp := struct {
-        StatusCode int `json:"statusCode"`
-        MultiValueHeaders map[string][]string `json:"multiValueHeaders"`
-        Body string `json:"body"`
-        IsBase64Encoded bool `json:"isBase64Encoded"`
-    }{}
-
-    err := json.Unmarshal(blob, &resp)
-
-    if err != nil {
-        return BuildErrorResponse(err, "Invalid JSON response")
-    } else if resp.IsBase64Encoded {
-        binary, err := base64.StdEncoding.DecodeString(resp.Body)
-        if err != nil {
-            return BuildErrorResponse(err, "Invalid body in JSON response")
-        }
-        return resp.StatusCode, binary, resp.MultiValueHeaders, nil
+    if pb.EnableMultiValue {
+        return resp.StatusCode, body, resp.MultiValueHeaders, nil
     } else {
-        return resp.StatusCode, []byte(resp.Body), resp.MultiValueHeaders, nil
+        return resp.StatusCode, body, MapToArrayMap(resp.Headers), nil
     }
 }
 
