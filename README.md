@@ -16,9 +16,13 @@ Usage of lambda-local-proxy:
         Lambda API endpoint
   -f string
         Lambda function name (default "myfunction")
+  -l string
+        HTTP listen address (default any)
   -m    Enable multi-value headers. Effective only with -t alb
+  -p int
+        HTTP listen port (default 8080)
   -t string
-        Gateway type (alb for ALB) (default "alb")
+        HTTP gateway type ("alb" for ALB) (default "alb")
 
   Environment variables:
     AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN
