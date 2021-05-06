@@ -1,3 +1,7 @@
+2021-05-05 version 0.0.3:
+
+* Add RequestContext field to events with a dummy TargetGroupArn
+
 2020-12-04 version 0.0.2:
 
 * Added X-Forwarded-For, X-Forwarded-Proto, and X-Forwarded-Port headers
