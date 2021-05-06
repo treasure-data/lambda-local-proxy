@@ -20,9 +20,12 @@ type PayloadBuilder interface {
 
 func main() {
     functionName := flag.String("f", "myfunction", "Lambda function name")
+    bind := flag.String("l", "", "HTTP listen address (default any)")
+    port := flag.Int("p", 8080, "HTTP listen port")
     endpoint := flag.String("e", "", "Lambda API endpoint")
-    apiType := flag.String("t", "alb", "Gateway type (alb for ALB)")
+    apiType := flag.String("t", "alb", "HTTP gateway type (\"alb\" for ALB)")
     albMultiValue := flag.Bool("m", false, "Enable multi-value headers. Effective only with -t alb")
+
     flag.Usage = func() {
         fmt.Println("Usage of lambda-local-proxy:")
         flag.PrintDefaults()
@@ -42,7 +45,9 @@ func main() {
     handler := MakeInvokeLambdaHandler(client, *functionName, pb)
 
     http.HandleFunc("/", handler)
-    log.Fatal(http.ListenAndServe(":8080", nil))
+
+    listenAddress := fmt.Sprintf("%s:%d", *bind, *port)
+    log.Fatal(http.ListenAndServe(listenAddress, nil))
 }
 
 func MakeLambdaClient(endpoint string) *lambda.Lambda {
