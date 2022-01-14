@@ -1,5 +1,6 @@
 2022-01-14 version 0.0.5:
 
+* Bumped Golang, aws-sdk-go and aws-lambda-go
 * Added ARM CPU build (`Darwin_arm64` and `Linux_arm64`), mainly to support Mac with Apple silicon
 
 2021-05-07 version 0.0.4:
