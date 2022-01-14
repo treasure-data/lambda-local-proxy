@@ -13,6 +13,11 @@ builds:
       - linux
       - windows
       - darwin
+    goarch:
+      - amd64
+      - arm64
+    goarm:
+      - 7 # for AWS and Apple Silicone
 archives:
   - replacements:
       darwin: Darwin
