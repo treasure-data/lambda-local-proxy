@@ -1,6 +1,6 @@
 # Lambda Local Proxy
 
-Lambda Local Proxy is a HTTP proxy that receives HTTP requests and invokes an AWS Lambda function. By combining with (lambci/docker-lambda)[https://github.com/lambci/docker-lambda], you can test Lambda handler code locally or on CI without deploying.
+Lambda Local Proxy is a HTTP proxy that receives HTTP requests and invokes an AWS Lambda function. By combining with [lambci/docker-lambda](https://github.com/lambci/docker-lambda), you can test Lambda handler code locally or on CI without deploying.
 
 This proxy can emulate following event formats at this moment:
 
@@ -59,7 +59,7 @@ $ go build
 
 ### Release
 
-See (GoReleaser)[https://goreleaser.com/] documents.
+See [GoReleaser](https://goreleaser.com/) documents.
 
 Cheat sheet:
 
