@@ -1,6 +1,14 @@
+2022-01-14 version 0.0.5:
+
+* Added ARM CPU build (`Darwin_arm64` and `Linux_arm64`), mainly to support Mac with Apple silicon
+
+2021-05-07 version 0.0.4:
+
+* Added `-l ADDRESS`(default: any) and `-p PORT` (default: `8080`) option
+
 2021-05-05 version 0.0.3:
 
-* Add RequestContext field to events with a dummy TargetGroupArn
+* Added RequestContext field to events with a dummy TargetGroupArn
 
 2020-12-04 version 0.0.2:
 
