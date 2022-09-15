@@ -40,9 +40,12 @@ func main() {
         os.Exit(1)
     }
 
+    requestFree := make(chan bool, 1)
+    requestFree <- true
+
     pb := NewALBPayloadBuilder(*albMultiValue)
     client := MakeLambdaClient(*endpoint)
-    handler := MakeInvokeLambdaHandler(client, *functionName, pb)
+    handler := MakeInvokeLambdaHandler(client, *functionName, pb, requestFree)
 
     http.HandleFunc("/", handler)
 
@@ -63,8 +66,17 @@ func MakeLambdaClient(endpoint string) *lambda.Lambda {
     return lambda.New(sess, &config)
 }
 
-func MakeInvokeLambdaHandler(client *lambda.Lambda, functionName string, pb PayloadBuilder) func(http.ResponseWriter, *http.Request) {
+func MakeInvokeLambdaHandler(client *lambda.Lambda, functionName string, pb PayloadBuilder, requestFree chan bool) func(http.ResponseWriter, *http.Request) {
     return func(w http.ResponseWriter, r *http.Request) {
+        // Use the requestFree channel as a lock to prevent more than one inflight request to the lambda function
+        // since it has a concurrency of one.
+        _, ok := <-requestFree
+        if !ok {
+            return // Indicates channel closure
+        }
+
+        defer func () {requestFree <- true}()
+
         // Add proxy headers
         r.Header.Add("X-Forwarded-For", r.RemoteAddr[0:strings.LastIndex(r.RemoteAddr, ":")])
         r.Header.Add("X-Forwarded-Proto", "http")
